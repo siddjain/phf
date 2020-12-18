@@ -1,0 +1,29 @@
+{
+  "name": "ldapjs-client",
+  "version": "0.0.1",
+  "description": "A thin wrapper over ldapjs to give a promise interface and a couple of other goodies",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "ldap",
+    "promise",
+    "authentication"
+  ],
+  "author": "Siddharth Jain",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/stewartml/promised-ldap/issues"
+  },
+  "homepage": "https://github.com/stewartml/promised-ldap#readme",
+  "dependencies": {
+    "ldapjs": "2.2.0",
+    "js-yaml": "3.14.0",
+    "winston": "~3.3.3"
+  }
+}

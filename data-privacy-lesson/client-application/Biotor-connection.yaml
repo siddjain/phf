@@ -1,0 +1,22 @@
+# Programming Hyperledger Fabric
+# Siddharth Jain
+# (c) All rights reserved.
+#
+---
+name: any-name-you-like
+version: 1.0.0
+client:
+  organization: Biotor
+  connection:
+    timeout:
+      peer:
+        endorser: '300'
+organizations:
+  Biotor:
+    mspid: BiotorMSP
+    peers:
+    - peer0.Biotor.com
+peers:
+  peer0.Biotor.com:
+    url: grpc://localhost:8051
+    

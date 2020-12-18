@@ -1,0 +1,398 @@
+# Programming Hyperledger Fabric
+# Siddharth Jain
+# (c) All rights reserved.
+#
+# This file is derived from https://github.com/hyperledger/fabric-samples/blob/v2.0.0-beta/first-network/configtx.yaml
+# that is licensed under terms of Apache 2.0 license
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# also https://github.com/hyperledger/fabric/blob/release-2.0/sampleconfig/configtx.yaml
+#
+# In production, you should replace all references to localhost (or 127.0.0.1) with name of the Docker container
+---
+################################################################################
+#
+#   Section: Organizations
+#
+#   - This section defines the different organizational identities which will
+#   be referenced later in the configuration.
+#
+################################################################################
+Organizations:
+# see https://learnxinyminutes.com/docs/yaml/ to understand what the funny characters like & mean in this file
+ 
+    - &Biotor
+        Name: Biotor
+
+        # ID to load the MSP definition as
+        ID: BiotorMSP
+
+        MSPDir: crypto-config/peerOrganizations/biotor.com/msp
+
+        Policies: 
+            Readers:
+                Type: Signature                 
+                Rule: "OR('BiotorMSP.member')"
+                
+            Writers:
+                Type: Signature
+                Rule: "OR('BiotorMSP.member')"
+                
+            Admins:
+                Type: Signature
+                Rule: "OR('BiotorMSP.admin')"
+
+            Endorsement:
+                Type: Signature
+                Rule: "OR('BiotorMSP.peer')"
+        
+        # OrdererEndpoints is a list of all orderers this org runs which clients
+        # and peers may to connect to to push transactions and receive blocks respectively.
+        OrdererEndpoints:
+            - localhost:7050
+        
+        AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+            - Host: localhost
+              Port: 8051
+        
+    - &XMed
+        Name: ExpressMedicinals
+
+        # ID to load the MSP definition as
+        ID: XMedMSP
+
+        MSPDir: crypto-config/peerOrganizations/xmed.com/msp
+
+        Policies: 
+            Readers:
+                Type: Signature                 
+                Rule: "OR('XMedMSP.member')"
+                
+            Writers:
+                Type: Signature
+                Rule: "OR('XMedMSP.member')"
+                
+            Admins:
+                Type: Signature
+                Rule: "OR('XMedMSP.admin')"
+
+            Endorsement:
+                Type: Signature
+                Rule: "OR('XMedMSP.peer')"
+
+        # OrdererEndpoints is a list of all orderers this org runs which clients
+        # and peers may to connect to to push transactions and receive blocks respectively.
+        OrdererEndpoints:
+            - localhost:7051
+
+        AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+            - Host: localhost
+              Port: 8053
+
+    - &KeyPharma
+        Name: KeyPharmacy
+
+        # ID to load the MSP definition as
+        ID: KeyPharmacyMSP
+
+        MSPDir: crypto-config/peerOrganizations/keypharmacy.com/msp
+
+        Policies: 
+            Readers:
+                Type: Signature                 
+                Rule: "OR('KeyPharmacyMSP.member')"
+                
+            Writers:
+                Type: Signature
+                Rule: "OR('KeyPharmacyMSP.member')"
+                
+            Admins:
+                Type: Signature
+                Rule: "OR('KeyPharmacyMSP.admin')"
+        
+            Endorsement:
+                Type: Signature
+                Rule: "OR('KeyPharmacyMSP.peer')"
+
+        # OrdererEndpoints is a list of all orderers this org runs which clients
+        # and peers may to connect to to push transactions and receive blocks respectively.
+        OrdererEndpoints:
+            - localhost:7052
+
+        AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+            - Host: localhost
+              Port: 8055
+
+################################################################################
+#
+#   SECTION: Capabilities
+#
+#   - This section defines the capabilities of fabric network. This is a new
+#   concept as of v1.1.0 and should not be utilized in mixed networks with
+#   v1.0.x peers and orderers.  Capabilities define features which must be
+#   present in a fabric binary for that binary to safely participate in the
+#   fabric network.  For instance, if a new MSP type is added, newer binaries
+#   might recognize and validate the signatures from this type, while older
+#   binaries without this support would be unable to validate those
+#   transactions.  This could lead to different versions of the fabric binaries
+#   having different world states.  Instead, defining a capability for a channel
+#   informs those binaries without this capability that they must cease
+#   processing transactions until they have been upgraded.  For v1.0.x if any
+#   capabilities are defined (including a map with all capabilities turned off)
+#   then the v1.0.x peer will deliberately crash.
+#
+################################################################################
+Capabilities:
+    # Channel capabilities apply to both the orderers and the peers and must be
+    # supported by both.
+    # Set the value of the capability to true to require it.
+    Channel: &ChannelCapabilities
+        # V2_0 capability ensures that orderers and peers behave according
+        # to v2.0 channel capabilities. Orderers and peers from
+        # prior releases would behave in an incompatible way, and are therefore
+        # not able to participate in channels at v2.0 capability.
+        # Prior to enabling V2.0 channel capabilities, ensure that all
+        # orderers and peers on a channel are at v2.0.0 or later.
+        V2_0: true
+
+    # Orderer capabilities apply only to the orderers, and may be safely
+    # used with prior release peers.
+    # Set the value of the capability to true to require it.
+    Orderer: &OrdererCapabilities
+        # V2_0 orderer capability ensures that orderers behave according
+        # to v2.0 orderer capabilities. Orderers from
+        # prior releases would behave in an incompatible way, and are therefore
+        # not able to participate in channels at v2.0 orderer capability.
+        # Prior to enabling V2.0 orderer capabilities, ensure that all
+        # orderers on channel are at v2.0.0 or later.
+        V2_0: true
+
+    # Application capabilities apply only to the peer network, and may be safely
+    # used with prior release orderers.
+    # Set the value of the capability to true to require it.
+    Application: &ApplicationCapabilities
+        # V2_0 application capability ensures that peers behave according
+        # to v2.0 application capabilities. Peers from
+        # prior releases would behave in an incompatible way, and are therefore
+        # not able to participate in channels at v2.0 application capability.
+        # Prior to enabling V2.0 application capabilities, ensure that all
+        # peers on channel are at v2.0.0 or later.
+        V2_0: true
+
+################################################################################
+#
+#   SECTION: Application
+#
+#   - This section defines the values to encode into a config transaction or
+#   genesis block for application related parameters
+#
+################################################################################
+Application: &ApplicationDefaults
+
+    # Organizations is the list of orgs which are defined as participants on
+    # the application side of the network
+    Organizations:
+
+    # Policies defines the set of policies at this level of the config tree
+    # For Application policies, their canonical path is
+    #   /Channel/Application/<PolicyName>
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        LifecycleEndorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+        Endorsement:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Endorsement"
+
+    Capabilities:
+        <<: *ApplicationCapabilities
+
+################################################################################
+#
+#   SECTION: Orderer
+#
+#   - This section defines the values to encode into a config transaction or
+#   genesis block for orderer related parameters
+#
+################################################################################
+Orderer: &OrdererDefaults
+
+    # solo mode is a simple mode in which there is only one orderer node which
+    # orders transactions on first-come-first-served basis. 
+    # OrdererType: solo
+
+    # Etcd is nothing but a distributed key-value store with CFT providing protection against single point of failure.
+    # In case of Fabric, this key-value store is storing (block_id, block). It will also order transactions on 
+    # first-come-first-served basis
+    OrdererType: etcdraft
+
+    EtcdRaft:
+        Consenters:
+            # Each peer organization contributes their own orderer node to the network
+            - Host: localhost
+            # The port here is the port used for exchanging Raft messages amongst orderers. The port used earlier (7050)
+            # will be the port on which ordererer will listen for messages from clients and peers. We use different ports
+            # because we don't want to get into the hassle of using TLS for communication with peers and clients in this sample.
+            # https://jira.hyperledger.org/browse/FAB-15648
+              Port: 7070
+              # we use the same certificate in both client and server mode to keep things simple (KISS)
+              ClientTLSCert: crypto-config/peerOrganizations/biotor.com/peers/orderer0.biotor.com/tls/server.crt
+              ServerTLSCert: crypto-config/peerOrganizations/biotor.com/peers/orderer0.biotor.com/tls/server.crt
+            - Host: localhost
+              Port: 7071
+              ClientTLSCert: crypto-config/peerOrganizations/xmed.com/peers/orderer0.xmed.com/tls/server.crt
+              ServerTLSCert: crypto-config/peerOrganizations/xmed.com/peers/orderer0.xmed.com/tls/server.crt
+            - Host: localhost
+              Port: 7072
+              ClientTLSCert: crypto-config/peerOrganizations/keypharmacy.com/peers/orderer0.keypharmacy.com/tls/server.crt
+              ServerTLSCert: crypto-config/peerOrganizations/keypharmacy.com/peers/orderer0.keypharmacy.com/tls/server.crt
+        
+        Options:
+            TickInterval: 500ms
+            ElectionTick: 10
+            HeartbeatTick: 1
+            MaxInflightBlocks: 5
+            SnapshotIntervalSize: 20 MB
+
+    # Addresses used to be the list of orderer addresses that clients and peers
+    # could connect to.  However, this does not allow clients to associate orderer
+    # addresses and orderer organizations which can be useful for things such
+    # as TLS validation. **The preferred way to specify orderer addresses is now
+    # to include the OrdererEndpoints item in your org definition**
+    Addresses:
+        # - 127.0.0.1:7050
+    
+    # Organizations is the list of orgs which are defined as participants on
+    # the orderer side of the network
+    Organizations:
+    
+    # Policies defines the set of policies at this level of the config tree
+    # For Orderer policies, their canonical path is
+    #   /Channel/Orderer/<PolicyName>
+    Policies:
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+        # BlockValidation specifies what signatures must be included in the block
+        # from the orderer for the peer to validate it.
+        BlockValidation:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+
+    # Batch Timeout: The amount of time to wait before creating a batch
+    BatchTimeout: 2s
+
+    # Batch Size: Controls the number of messages batched into a block
+    BatchSize:
+
+        # Max Message Count: The maximum number of messages to permit in a batch
+        MaxMessageCount: 10
+
+        # Absolute Max Bytes: The absolute maximum number of bytes allowed for
+        # the serialized messages in a batch.
+        AbsoluteMaxBytes: 99 MB
+
+        # Preferred Max Bytes: The preferred maximum number of bytes allowed for
+        # the serialized messages in a batch. A message larger than the preferred
+        # max bytes will result in a batch larger than preferred max bytes.
+        PreferredMaxBytes: 512 KB    
+
+################################################################################
+#
+#   CHANNEL
+#
+#   This section defines the values to encode into a config transaction or
+#   genesis block for channel related parameters.
+#
+################################################################################
+Channel: &ChannelDefaults
+    # Policies defines the set of policies at this level of the config tree
+    # For Channel policies, their canonical path is
+    #   /Channel/<PolicyName>
+    Policies:
+        # Who may invoke the 'Deliver' API
+        Readers:
+            Type: ImplicitMeta
+            Rule: "ANY Readers"
+        # Who may invoke the 'Broadcast' API
+        Writers:
+            Type: ImplicitMeta
+            Rule: "ANY Writers"
+        # By default, who may modify elements at this config level
+        Admins:
+            Type: ImplicitMeta
+            Rule: "MAJORITY Admins"
+
+    # Capabilities describes the channel level capabilities, see the
+    # dedicated Capabilities section elsewhere in this file for a full
+    # description
+    Capabilities:
+        <<: *ChannelCapabilities
+
+################################################################################
+#
+#   Profile
+#
+#   - Different configuration profiles may be encoded here to be specified
+#   as parameters to the configtxgen tool
+#
+################################################################################
+Profiles:
+
+    # this profile will be used by configtxgen to generate the genesis block that is used to
+    # bootstrap the orderer. Note that the same organizations that form the peer network also
+    # form the orderer network. 
+    Genesis:
+        <<: *ChannelDefaults
+        Orderer:
+            <<: *OrdererDefaults
+            Organizations:
+                - *Biotor
+                - *XMed
+                - *KeyPharma
+            Capabilities:
+                <<: *OrdererCapabilities
+        Consortiums:
+            PharmaLedger:
+                Organizations:
+                    - *KeyPharma
+                    - *Biotor
+                    - *XMed
+    
+    # this profile will be used by configtxgen to generate the channel configuration transaction
+    # that will be used to create the application channel
+    Channel:
+        Consortium: PharmaLedger
+        <<: *ChannelDefaults
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *KeyPharma
+                - *Biotor
+                - *XMed
+            Capabilities:
+                <<: *ApplicationCapabilities

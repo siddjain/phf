@@ -1,0 +1,105 @@
+# Programming Hyperledger Fabric
+# Siddharth Jain
+# (c) All rights reserved.
+#
+# This file is based on the crypto-config.yaml that comes with Fabric samples
+# and is licensed under terms of the Apache-2.0 license:
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# This file is used by cryptogen tool to generate X.509 certificates and private keys
+# The command to do it is:
+# cryptogen generate --config=./crypto-config.yaml
+#
+
+# ---------------------------------------------------------------------------
+# "PeerOrgs" - Definition of organizations managing peer nodes
+# ---------------------------------------------------------------------------
+PeerOrgs:
+  # ---------------------------------------------------------------------------
+  # Biotor (Drug Manufacturer)
+  # ---------------------------------------------------------------------------
+  - Name: Biotor
+    # the domain is simply identitifier of a directory cryptogen will create
+    Domain: biotor.com
+    EnableNodeOUs: true
+    CA:
+       Hostname: ca # implicitly ca.biotor.com
+    Specs:
+
+      # IMPORANT NOTE: as far as cryptogen is considered, orderer0.biotor.com is a PEER.
+      # This is reflected in the path which cryptogen will generate for orderer0.biotor.com:
+      #        crypto-config/peerOrganizations/biotor.com/peers/orderer0.biotor.com/
+      # Next I also encourage you to crack open the X.509 cert of orderer0.biotor.com.
+      # The cert will be found in following path after you run cryptogen:
+      #   crypto-config/peerOrganizations/biotor.com/peers/orderer0.biotor.com/msp/signcerts/orderer0.biotor.com-cert.pem
+      # If you print the cert using openssl utility, you shall find OU=peer again confirming that as far as
+      # cryptogen is considered this is a PEER. Just because we name it orderer0.biotor.com does not mean
+      # it becomes an orderer.
+      # But we use orderer0.biotor.com as the identity of Biotor orderer. So what gives?
+      # Call it a HACK if you will but there is a method in this madness. The main benefit is that we
+      # don't have to create fictitious organizations for the orderers. And I have set things up in configtx.yaml so that
+      # everything works out. If you want OU=orderer on orderer0.biotor.com then it has to be declared under OrdererOrgs
+      # in the yaml. Take a look at the three-org-aliter folder for how the crypto-config.yaml will look like in that case.
+      # Also you will need to change configtx.yaml appropriately. The modified configtx.yaml can also be found under three-org-alier.
+      # It is well worth to compare the two versions as it will deepen your understanding of Fabric.
+
+      - Hostname: orderer0 # will create directory named orderer0.biotor.com i.e., {Hostname}.{Domain}
+        CommonName: orderer0.biotor.com # CN to use in TLS certificate
+        SANS:
+          - "localhost" # alternative aliases by which the subject defined in TLS certificate is known
+          - "127.0.0.1"
+      - Hostname: peer0 # will create directory named peer0.biotor.com
+        CommonName: peer0.biotor.com
+        SANS:
+          - "localhost"
+          - "127.0.0.1"
+    # ---------------------------------------------------------------------------
+    # Count: The number of user accounts _in addition_ to Admin
+    # ---------------------------------------------------------------------------
+    Users:
+      Count: 1
+
+  # ---------------------------------------------------------------------------
+  # Express Medicinals (Drug Wholeseller)
+  # ---------------------------------------------------------------------------
+  - Name: Express Medicinals
+    Domain: xmed.com
+    EnableNodeOUs: true
+    CA:
+       Hostname: ca # implicitly ca.xmed.com
+    Specs:
+    - Hostname: orderer0 # will create directory named orderer0.xmed.com
+      CommonName: orderer0.xmed.com
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+    - Hostname: peer0 # will create directory named peer0.xmed.com
+      CommonName: peer0.xmed.com
+      SANS:
+        - "localhost"
+        - "127.0.0.1"    
+    Users:
+      Count: 1
+
+  # ---------------------------------------------------------------------------
+  # Key Pharmacy (Drug Retailer)
+  # ---------------------------------------------------------------------------
+  - Name: Key Pharmacy
+    Domain: keypharmacy.com
+    EnableNodeOUs: true
+    CA:
+       Hostname: ca # implicitly ca.xmed.com
+    Specs:
+    - Hostname: orderer0 # will create directory named orderer0.keypharmacy.com
+      CommonName: orderer0.keypharmacy.com 
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+    - Hostname: peer0 # will create directory named peer0.keypharmacy.com
+      CommonName: peer0.keypharmacy.com
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+    Users:
+      Count: 1
+

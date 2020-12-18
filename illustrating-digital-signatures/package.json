@@ -1,0 +1,17 @@
+{
+    "name": "illustrating-digital-signatures",
+    "version": "0.0.1",
+    "description": "Illustrating Digital Signatures",
+    "main": "index.js",
+    "engines": {
+        "node": ">=10",
+        "npm": ">=5"
+    },
+    "engineStrict": true,
+    "author": "Siddharth Jain",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "bitcoinjs-lib": "5.1.6",
+        "secp256k1": "^4.0.1"
+    }
+}

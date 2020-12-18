@@ -1,0 +1,23 @@
+# Programming Hyperledger Fabric
+# Siddharth Jain
+# (c) All rights reserved.
+#
+
+ldap:
+  base:
+    dn: dc=biotor,dc=com
+
+  server: ldap.biotor.com
+  port: 389
+
+  admin:
+    password: superman
+
+  config:
+    password: spiderman
+
+  tls:
+    ca: donald_mickey_chain.pem
+    key: client_tls_key.pem
+    cert: client_tls_cert.pem
+    subjectAltName:  ldap.biotor.com

@@ -1,0 +1,134 @@
+# Programming Hyperledger Fabric
+# Siddharth Jain
+# (c) All rights reserved.
+#
+# This file is derived from crypto-config.yaml distributed with Fabric samples
+# and licensed under terms of Apache-2.0 license:
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# This file is used by cryptogen tool to generate X.509 certificates and private keys
+# The command to do it is:
+# cryptogen generate --config=./crypto-config.yaml
+#
+
+# ---------------------------------------------------------------------------
+# "PeerOrgs" - Definition of organizations managing peer nodes
+# ---------------------------------------------------------------------------
+PeerOrgs:
+  # ---------------------------------------------------------------------------
+  # Biotor (Drug Manufacturer)
+  # ---------------------------------------------------------------------------
+  - Name: Biotor
+    # the domain is simply identitifier of a directory cryptogen will create
+    Domain: biotor.com
+    EnableNodeOUs: true
+    CA:
+       Hostname: ca # implicitly ca.biotor.com
+    Specs:
+      - Hostname: peer0 # will create directory named peer0.biotor.com
+        CommonName: peer0.biotor.com
+        SANS:
+          - "localhost"
+          - "127.0.0.1"
+          
+    # ---------------------------------------------------------------------------
+    # Count: The number of user accounts _in addition_ to Admin
+    # ---------------------------------------------------------------------------
+    Users:
+      Count: 1
+
+  # ---------------------------------------------------------------------------
+  # Express Medicinals (Drug Wholeseller)
+  # ---------------------------------------------------------------------------
+  - Name: Express Medicinals
+    Domain: xmed.com
+    EnableNodeOUs: true
+    CA:
+       Hostname: ca # implicitly ca.xmed.com
+    Specs:
+    - Hostname: peer0 # will create directory named peer0.xmed.com
+      CommonName: peer0.xmed.com
+      SANS:
+        - "localhost"  
+        - "127.0.0.1"  
+    Users:
+      Count: 1
+
+  # ---------------------------------------------------------------------------
+  # Key Pharmacy (Drug Retailer)
+  # ---------------------------------------------------------------------------
+  - Name: Key Pharmacy
+    Domain: keypharmacy.com
+    EnableNodeOUs: true
+    CA:
+       Hostname: ca # implicitly ca.xmed.com
+    Specs:
+    - Hostname: peer0 # will create directory named peer0.keypharmacy.com
+      CommonName: peer0.keypharmacy.com
+      SANS:
+        - "localhost"
+        - "127.0.0.1"
+    Users:
+      Count: 1
+
+# ---------------------------------------------------------------------------
+# "OrdererOrgs" - Definition of fictitious organizations managing orderer nodes
+# ---------------------------------------------------------------------------
+
+# IMPORTANT NOTE:
+# Observe that this section is not present in $/phf/three-org-network/crypto-config.yaml
+# Both yaml files are correct. They just have to be used differently. You decide what works for you.
+
+OrdererOrgs:
+  # ---------------------------------------------------------------------------
+  # Biotor (Drug Manufacturer)
+  # ---------------------------------------------------------------------------
+  - Name: Biotor
+    # the domain is simply identitifier of a directory cryptogen will create
+    Domain: biotor.com
+    EnableNodeOUs: true
+    CA:
+        Hostname: ca # implicitly ca.biotor.com
+    Specs:
+
+      # The credentials for orderer will now be generated under:
+      #    crypto-config/ordererOrganizations/biotor.com/orderers/orderer0.biotor.com/
+      # and the X.509 cert for the orderer will have OU=orderer
+      # This feels more correct but the problem is that now we have to create 3 fictitious organizations
+
+      - Hostname: orderer0 # will create directory named orderer0.biotor.com i.e., {Hostname}.{Domain}
+        CommonName: orderer0.biotor.com # CN to use in TLS certificate
+        SANS:
+          - "localhost" # alternative aliases by which the subject defined in TLS certificate is known
+          - "127.0.0.1"          
+
+  # ---------------------------------------------------------------------------
+  # Express Medicinals (Drug Wholeseller)
+  # ---------------------------------------------------------------------------
+  - Name: Express Medicinals
+    Domain: xmed.com
+    EnableNodeOUs: true
+    CA:
+        Hostname: ca # implicitly ca.xmed.com
+    Specs:
+    - Hostname: orderer0 # will create directory named orderer0.xmed.com
+      CommonName: orderer0.xmed.com
+      SANS:
+        - "localhost"  
+        - "127.0.0.1"  
+
+  # ---------------------------------------------------------------------------
+  # Key Pharmacy (Drug Retailer)
+  # ---------------------------------------------------------------------------
+  - Name: Key Pharmacy
+    Domain: keypharmacy.com
+    EnableNodeOUs: true
+    CA:
+        Hostname: ca # implicitly ca.xmed.com
+    Specs:
+    - Hostname: orderer0 # will create directory named orderer0.keypharmacy.com
+      CommonName: orderer0.keypharmacy.com 
+      SANS:
+        - "localhost"
+        - "127.0.0.1"    
+

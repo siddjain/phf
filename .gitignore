@@ -1,0 +1,14 @@
+client-application-with-tls/
+docker-network/
+phf-master.zip
+*.swp
+node_modules
+peer0.biotor.com
+peer0.xmed.com
+peer0.keypharmacy.com
+orderer0.biotor.com
+orderer0.xmed.com
+orderer0.keypharmacy.com
+couchdb.peer0.biotor.com
+couchdb.peer0.xmed.com
+couchdb.peer0.keypharmacy.com

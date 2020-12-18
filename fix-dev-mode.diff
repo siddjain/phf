@@ -1,0 +1,111 @@
+diff --git a/core/chaincode/chaincode_support.go b/core/chaincode/chaincode_support.go
+index 59875f8b9..a565e287c 100644
+--- a/core/chaincode/chaincode_support.go
++++ b/core/chaincode/chaincode_support.go
+@@ -81,6 +81,10 @@ func (cs *ChaincodeSupport) Launch(ccid string) (*Handler, error) {
+ 		return h, nil
+ 	}
+ 
++	if cs.UserRunsCC {
++		return nil, errors.Errorf("peer running in DEV mode and no handler is registered for %s", ccid)
++	}
++
+ 	if err := cs.Launcher.Launch(ccid, cs); err != nil {
+ 		return nil, errors.Wrapf(err, "could not launch chaincode %s", ccid)
+ 	}
+diff --git a/core/chaincode/lifecycle/lifecycle.go b/core/chaincode/lifecycle/lifecycle.go
+index d2d1b2e3b..78eadf7a3 100644
+--- a/core/chaincode/lifecycle/lifecycle.go
++++ b/core/chaincode/lifecycle/lifecycle.go
+@@ -535,7 +535,7 @@ func (ef *ExternalFunctions) QueryOrgApprovals(name string, cd *ChaincodeDefinit
+ 
+ // InstallChaincode installs a given chaincode to the peer's chaincode store.
+ // It returns the hash to reference the chaincode by or an error on failure.
+-func (ef *ExternalFunctions) InstallChaincode(chaincodeInstallPackage []byte) (*chaincode.InstalledChaincode, error) {
++func (ef *ExternalFunctions) InstallChaincode(chaincodeInstallPackage []byte, userRunsCC bool) (*chaincode.InstalledChaincode, error) {
+ 	// Let's validate that the chaincodeInstallPackage is at least well formed before writing it
+ 	pkg, err := ef.Resources.PackageParser.Parse(chaincodeInstallPackage)
+ 	if err != nil {
+@@ -551,15 +551,17 @@ func (ef *ExternalFunctions) InstallChaincode(chaincodeInstallPackage []byte) (*
+ 		return nil, errors.WithMessage(err, "could not save cc install package")
+ 	}
+ 
+-	buildStatus, ok := ef.BuildRegistry.BuildStatus(packageID)
+-	if !ok {
+-		err := ef.ChaincodeBuilder.Build(packageID)
+-		buildStatus.Notify(err)
+-	}
+-	<-buildStatus.Done()
+-	if err := buildStatus.Err(); err != nil {
+-		ef.Resources.ChaincodeStore.Delete(packageID)
+-		return nil, errors.WithMessage(err, "could not build chaincode")
++	if !userRunsCC {
++		buildStatus, ok := ef.BuildRegistry.BuildStatus(packageID)
++		if !ok {
++			err := ef.ChaincodeBuilder.Build(packageID)
++			buildStatus.Notify(err)
++		}
++		<-buildStatus.Done()
++		if err := buildStatus.Err(); err != nil {
++			ef.Resources.ChaincodeStore.Delete(packageID)
++			return nil, errors.WithMessage(err, "could not build chaincode")
++		}
+ 	}
+ 
+ 	if ef.InstallListener != nil {
+diff --git a/core/chaincode/lifecycle/scc.go b/core/chaincode/lifecycle/scc.go
+index b8ba01060..5dc6f172e 100644
+--- a/core/chaincode/lifecycle/scc.go
++++ b/core/chaincode/lifecycle/scc.go
+@@ -72,7 +72,7 @@ const (
+ // for each of the SCC functions
+ type SCCFunctions interface {
+ 	// InstallChaincode persists a chaincode definition to disk
+-	InstallChaincode([]byte) (*chaincode.InstalledChaincode, error)
++	InstallChaincode([]byte, bool) (*chaincode.InstalledChaincode, error)
+ 
+ 	// QueryInstalledChaincode returns metadata for the chaincode with the supplied package ID.
+ 	QueryInstalledChaincode(packageID string) (*chaincode.InstalledChaincode, error)
+@@ -146,6 +146,9 @@ type SCC struct {
+ 	// Dispatcher handles the rote protobuf boilerplate for unmarshaling/marshaling
+ 	// the inputs and outputs of the SCC functions.
+ 	Dispatcher *dispatcher.Dispatcher
++
++	// true in DEV mode. false in NET mode.
++	UserRunsCC bool
+ }
+ 
+ // Name returns "_lifecycle"
+@@ -255,7 +258,7 @@ func (i *Invocation) InstallChaincode(input *lb.InstallChaincodeArgs) (proto.Mes
+ 		)
+ 	}
+ 
+-	installedCC, err := i.SCC.Functions.InstallChaincode(input.ChaincodeInstallPackage)
++	installedCC, err := i.SCC.Functions.InstallChaincode(input.ChaincodeInstallPackage, i.SCC.UserRunsCC)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+diff --git a/internal/peer/node/start.go b/internal/peer/node/start.go
+index 340d6da26..0ae883faf 100644
+--- a/internal/peer/node/start.go
++++ b/internal/peer/node/start.go
+@@ -613,6 +613,7 @@ func serve(args []string) error {
+ 		OrgMSPID:               mspID,
+ 		ChannelConfigSource:    peerInstance,
+ 		ACLProvider:            aclProvider,
++		UserRunsCC:             userRunsCC,
+ 	}
+ 
+ 	chaincodeLauncher := &chaincode.RuntimeLauncher{
+@@ -653,7 +654,10 @@ func serve(args []string) error {
+ 		launcher:      chaincodeLauncher,
+ 		streamHandler: chaincodeSupport,
+ 	}
+-	go chaincodeCustodian.Work(buildRegistry, containerRouter, custodianLauncher)
++
++	if !userRunsCC {
++		go chaincodeCustodian.Work(buildRegistry, containerRouter, custodianLauncher)
++	}
+ 
+ 	ccSupSrv := pb.ChaincodeSupportServer(chaincodeSupport)
+ 	if tlsEnabled {

@@ -1,0 +1,69 @@
+{
+    "name": "local_fabric",
+    "version": "1.0.0",
+    "wallet": "local_fabric_wallet",
+    "client": {
+        "tlsEnable": false,
+        "enableAuthentication": false,
+        "organization": "BiotorMSP",
+        "adminUser": "admin",
+        "adminPassword": "adminpw",
+        "connection": {
+            "timeout": {
+                "peer": {
+                    "endorser": "300"
+                },
+                "orderer": "300"
+            }
+        }
+    },
+	"channels": {
+		"tracktrace": {
+			"peers": {
+				"peer0.biotor.com": {}
+			},
+			"connection": {
+				"timeout": {
+					"peer": {
+						"endorser": "6000",
+						"eventHub": "6000",
+						"eventReg": "6000"
+					}
+				}
+			}
+		}
+	},
+    "organizations": {
+        "BiotorMSP": {
+            "mspid": "BiotorMSP",
+            "peers": [
+                "peer0.biotor.com"
+            ],
+            "certificateAuthorities": [
+                
+            ],
+            "adminPrivateKey": {
+                "path":"/tmp/crypto/peerOrganizations/Biotor.com/users/Admin@biotor.com/msp/keystore/priv_sk"
+            },
+            "signedCert": {
+                "path":"/tmp/crypto/peerOrganizations/Biotor.com/users/Admin@biotor.com/msp/signcerts/Admin@biotor.com-cert.pem"
+            }
+        }
+    },
+    "peers": {
+        "peer0.biotor.com": {
+            "url": "grpc://peer0.biotor.com:8051",
+		    "eventUrl":"grpc://peer0.biotor.com:8051",
+            "grpcOptions": {
+                "ssl-target-name-override": "peer0.biotor.com"
+            },
+            "tlsCACerts": {
+                "path": "/tmp/crypto/peerOrganizations/Biotor.com/tlsca/tlsca.biotor.com-cert.pem"
+            }
+        }
+    },
+    "certificateAuthorities": {
+        
+    }
+}
+				
