@@ -1,0 +1,67 @@
+= Hyperledger Fabric: Problems and Solutions
+
+== `checkcommitreadiness` returns false
+
+Did you specify a `signature-policy` at time of `approvalformyorg`? If so, did you re-specify that `signature-policy` when executing `checkcommitreadiness`? 
+
+== Error: got unexpected status: FORBIDDEN -- implicit policy evaluation failed
+
+----
+$ ./create-channel.sh
+2020-05-14 11:22:05.549 PDT [channelCmd] InitCmdFactory -> INFO 001 Endorser and orderer connections initialized
+Error: got unexpected status: FORBIDDEN -- implicit policy evaluation failed - 0 sub-policies were satisfied, but this policy requires 1 of the 'Writers' sub-policies to be satisfied: permission denied
+----
+
+In `configtx.yaml` change 
+
+----
+Writers:
+    Type: Signature
+    Rule: "OR('XMedMSP.admin', 'XMedMSP.client')"
+----
+
+to
+
+----
+Writers:
+    Type: Signature
+    Rule: "OR('XMedMSP.member')"
+----
+
+== Rejecting deliver request for [::1]:52044 because of consenter error
+
+----
+2020-05-14 11:38:52.521 PDT [common.deliver] deliverBlocks -> WARN 04d [channel: tracktrace] Rejecting deliver request for [::1]:52044 because of consenter error
+----
+
+This is normal and can happen when the `peer channel create` command
+submits a request to create a channel and starts polling the orderer for the genesis block. The ports you are seeing in the errors above are the ports at which the `peer channel create` is listening for the 
+genesis block from the orderer. It opens a new port when it receives an error. The errors happen because the orderer will reject the request for a genesis block until all the ordering nodes have to come to consensus about 
+it - hence the consenter error. The errors will disappear once the system reaches consensus.
+
+== configtxlator: error: open /dev/stdout: permission denied
+
+This happens when redirecting output of `configtxlator` to a text file.
+
+----
+configtxlator: error: open /dev/stdout: permission denied, try --help
+----
+
+No known solution to this.
+
+== Failed constructing descriptor ..: cannot satisfy any principal combination
+
+----
+Failed constructing descriptor for chaincode chaincodes:<name:"mycc" > ,: cannot satisfy any principal combination
+----
+
+This will happen if there are no anchor peers defined on the network. The discovery service needs anchor peers to be defined for it to work and discover information of other organizations.
+
+== principal deserialization failure (the supplied identity is not valid: x509:..
+
+----
+WARN 03c principal deserialization failure (the supplied identity is not valid: x509: certificate signed by unknown authority) for identity
+----
+
+This can happen if you set wrong `CORE_PEER_LOCALMSPID` while making a channel creation request for example. It can also happen if you overwrite the `crypto-config` directory by running `cryptogen` again. The `cacerts`
+will not match the `cacerts` in the genesis block now.
